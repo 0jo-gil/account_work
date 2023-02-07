@@ -4,9 +4,10 @@ import com.example.account.domain.Account;
 import com.example.account.dto.AccountDto;
 import com.example.account.dto.CreateAccount;
 import com.example.account.dto.DeleteAccount;
+import com.example.account.exception.AccountException;
 import com.example.account.service.AccountService;
-import com.example.account.service.RedisTestService;
 import com.example.account.type.AccountStatus;
+import com.example.account.type.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +34,6 @@ class AccountControllerTest {
     @MockBean
     private AccountService accountService;
 
-    @MockBean
-    private RedisTestService redisTestService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -105,6 +104,20 @@ class AccountControllerTest {
         mockMvc.perform(get("/account/876"))
                 .andDo(print())
                 .andExpect(jsonPath("$.accountNumber").value("3456"))
+                .andExpect(jsonPath("$.accountStatus").value("IN_USE"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void failGetAccount() throws Exception{
+        // given
+        given(accountService.getAccount(anyLong()))
+                .willThrow(new AccountException(ErrorCode.ACCOUNT_NOT_FOUND));
+        // when
+        // then
+        mockMvc.perform(get("/account/876"))
+                .andDo(print())
+                .andExpect(jsonPath("$.accountNumber").value("1234"))
                 .andExpect(jsonPath("$.accountStatus").value("IN_USE"))
                 .andExpect(status().isOk());
     }
